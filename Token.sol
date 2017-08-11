@@ -263,4 +263,28 @@ contract Token is  secureMath, ERC20 {
           increments[nextIncrementIndexNumber] = _incrementPercentage;
           nextIncrementIndexNumber ++;
       }
+
+    // Function that mints the token increment, called from the wallet.
+    // Mints all the token increments till date for a specific beneficiary.
+    // Called from the Wallet through the 'claimTokenIncrement' function.
+    function mintTokenIncrement (address beneficiary)
+      onlyFromWallet
+      isTokenHolder(beneficiary)
+      eligibleForTokenIncrement(beneficiary) {
+        uint256 i = tokenHolderIncrementIndex[uint(beneficiary)];
+        uint totalTokens;
+        while (i < (nextIncrementIndexNumber-1)) {
+          require (safeToMultiply(increments[i+1], balances[uint(beneficiary)]));
+
+          uint tokens = increments[i+1] * balances[uint(beneficiary)] / 100;
+          require (safeToAdd(balances[uint(beneficiary)], tokens));
+
+          balances[uint(beneficiary)] += tokens;
+          tokensSupplied += tokens;
+          totalTokens += tokens;
+          i++;
+        }
+        Mint(beneficiary, totalTokens);
+        tokenHolderIncrementIndex[uint(beneficiary)] = i;
+      }
   }
