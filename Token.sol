@@ -27,6 +27,48 @@ contract Token is  secureMath, ERC20 {
     uint public swapValue = 20;
 
     address public walletAddress;
+    address public TACAddress;
+
+    // Stores the status of the token increment activity
+    // Points to the next increment index number. Set to 1 by default.
+    uint nextIncrementIndexNumber = 1;
+
+    // A mapping that stores the values of increment corresponding
+    // to each increment index. For ex- If the percentage increment is
+    // 10 % for 1st index and 20% for 2nd index, the mapping stores [(1,10), (2,20)]
+    mapping (uint => uint) increments;
+
+    // A vairable that stores the total number of tokens that have beem sold.
+    uint256 public tokensSupplied;
+
+    // A variable to store the time at which the token sale starts
+    uint256 public creationTime;
+
+    // A vairable to store if tokens are being transferred between token holders
+    bool public transferStop;
+
+    // A boolean that stores if token increment has been called by the owner from
+    // the TACvoting contract.
+    bool public tokenIncrementInitiated;
+
+    // An array that stores the tokenHolders
+    uint[] tokenHolders;
+
+    // A boolean to check that is switched to true when tokens
+    // are bought to the beneficiaries' name.
+    mapping (uint => bool) existingTokenHolder;
+
+    // mapping to store the balances corresponding to token holders.
+    mapping (uint => uint256) balances;
+
+    // mapping that keeps track of the increment index at
+    // which the owner is.
+    mapping (uint => uint) tokenHolderIncrementIndex;
+
+    // Mapping to store the allowed token transfer values
+    // corresponding to 2 addresses.
+    mapping (address => mapping (address => uint256)) allowed;
+
 
     // Event fired whenever tokens are minted.
     event Mint(address newTokenHolder, uint amountOfTokens);
@@ -211,4 +253,14 @@ contract Token is  secureMath, ERC20 {
           transferStop = false;
           TokenSaleOver();
     }
+
+    // Function that is called from the TACvoting contract
+    // whenever a special proposal corresponding to increment of tokens
+    // is called.
+    function addIncrement (uint _incrementPercentage)
+      onlyFromTAC {
+          tokenIncrementInitiated = true;
+          increments[nextIncrementIndexNumber] = _incrementPercentage;
+          nextIncrementIndexNumber ++;
+      }
   }
