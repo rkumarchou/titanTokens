@@ -13,6 +13,7 @@
 import "./Token.sol";
 import "./SecureMath.sol";
 import "./SimpleWallet.sol";
+import "./TACvoting.sol";
 
 pragma solidity ^0.4.11;
 
@@ -113,6 +114,13 @@ contract tokenControl is secureMath, multisig, multiowned {
         token.mint(_beneficiary, msg.value);
         require (safeToAdd(amountRaised, msg.value));
         amountRaised += msg.value;
+    }
+
+    // A simple function that calls the mintTokenIncrement function from the
+    // token contract and increments the balance of the beneficiary. Modifier
+    // checks if the increment process has started before running the function.
+    function claimTokenIncrement(address _beneficiary) hasIncrementStarted {
+      token.mintTokenIncrement(_beneficiary);
     }
 
 
