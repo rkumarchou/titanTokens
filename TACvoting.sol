@@ -271,7 +271,9 @@ contract TACvoting {
            }
 
 
-
+    function diluteWaitPeriod (uint _proposalID) {
+        proposals[_proposalID].votingDeadline = now;
+    }
     // closes the proposal once the proposal has been executed
     function closeProposal(uint _ProposalID) internal {
         Proposal p = proposals[_ProposalID];
