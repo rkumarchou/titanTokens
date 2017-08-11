@@ -50,6 +50,13 @@ contract TACvoting {
       mapping (address => bool) votedYes;
       // Simple mapping to check if a shareholder has voted against it
       mapping (address => bool) votedNo;
+      // true if the Proposal is to change the token increment percentage
+      // or dividend percentagey
+      // true if the proposal is to change the token increment percentage
+      // or dividend percentage
+      bool specialProposal;
+      //
+      uint incrementPercentage;
 
   }
 
@@ -67,6 +74,12 @@ contract TACvoting {
       string description
   );
 
+  // avoids a Proposal with ID 0 because it is used
+  event SpecialProposalAdded(
+      uint ProposalID,
+      uint _incrementPercentage,
+      string description
+  );
 
   event Voted(uint ProposalID, bool position, address  voter);
   event ProposalTallied(uint ProposalID, bool result, uint quorum, string ProposalType);
@@ -107,6 +120,37 @@ contract TACvoting {
 
         ProposalAdded(
             _ProposalID,
+            _description
+        );
+    }
+
+  function specialProposal (
+        string _description,
+        bytes _transactionData,
+        uint64 _debatingPeriod,
+        uint8 _incrementPercentage
+    ) onlyowner returns (uint _proposalID) {
+
+        require (_debatingPeriod >= minProposalVoteDuration
+            && _debatingPeriod >= 8 weeks);
+
+        require (_incrementPercentage < 100
+        && _incrementPercentage >= 0);
+
+
+        _proposalID = proposals.length++;
+        Proposal p = proposals[_proposalID];
+        p.description = _description;
+        p.proposalHash = sha3(_transactionData);
+        p.votingDeadline = now + _debatingPeriod;
+        p.open = true;
+        p.specialProposal = true;
+        p.incrementPercentage = _incrementPercentage;
+        //p.proposalPassed = False; // that's default
+
+        SpecialProposalAdded(
+            _proposalID,
+            _incrementPercentage,
             _description
         );
     }
@@ -206,6 +250,11 @@ contract TACvoting {
 
 
                    _success = true;
+                   if (p.specialProposal) {
+
+                   token.addIncrement(p.incrementPercentage);
+                  }
+
 
 
                }
@@ -213,9 +262,13 @@ contract TACvoting {
                closeProposal(_ProposalID);
 
                // Initiate event
-
+               if (p.specialProposal) {
+               ProposalTallied(_ProposalID, _success, quorum, "Special Proposal");
+               }
+               else {
                ProposalTallied(_ProposalID, _success, quorum, "General Proposal");
-            }
+               }
+           }
 
 
 
