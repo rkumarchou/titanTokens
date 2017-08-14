@@ -5,7 +5,11 @@ import "./Token.sol";
 // This is the voting contract that will be used for calling the Proposals.
 contract TACvoting {
 
-  address public owner;
+  uint[128] public owners;
+
+  uint public numOwners;
+
+  mapping(uint => uint) ownerIndex;
 
   // The minimum debate period that a generic Proposal can have
   uint constant minProposalVoteDuration = 2 weeks;
@@ -86,12 +90,20 @@ contract TACvoting {
 
 
   modifier onlyowner {
-    require (msg.sender == owner);
+    require (ownerIndex[uint(msg.sender)] > 0);
     _;
   }
 
-  function TACvoting () {
-      owner = msg.sender;
+  function TACvoting (address[] _owners) {
+      numOwners = _owners.length + 1;
+      owners[1] = uint(msg.sender);
+      ownerIndex[uint(msg.sender)] = 1;
+      for (uint i = 0; i < _owners.length; ++i)
+      {
+          owners[2 + i] = uint(_owners[i]);
+          ownerIndex[uint(_owners[i])] = 2 + i;
+      }
+
       lastTimeMinQuorumMet = now;
       minQuorumDivisor = 2;
       proposals.length = 1; // avoids a Proposal with ID 0 because it is used
@@ -271,8 +283,12 @@ contract TACvoting {
            }
 
 
-    function diluteWaitPeriod (uint _proposalID) {
-        proposals[_proposalID].votingDeadline = now;
+    function diluteWaitPeriod (uint _proposalID, string _transactionData) {
+
+        Proposal p = proposals[_proposalID];
+
+        require (p.proposalHash == sha3(_transactionData));
+        p.votingDeadline = now;
     }
     // closes the proposal once the proposal has been executed
     function closeProposal(uint _ProposalID) internal {
