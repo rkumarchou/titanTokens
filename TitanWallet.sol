@@ -34,7 +34,6 @@ contract tokenControl is secureMath, multisig, multiowned {
     uint public constant MAX_ETH = 75000 ether; // Hard cap, capped otherwise by total tokens sold (max 7.5M FYN)
     Token public token;
 
-
     modifier isOverZeroValue {
         require (msg.value != 0);
         _;
